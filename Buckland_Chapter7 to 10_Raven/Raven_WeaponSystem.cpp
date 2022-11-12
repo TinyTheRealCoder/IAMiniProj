@@ -261,11 +261,38 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
 //-----------------------------------------------------------------------------
 void Raven_WeaponSystem::AddNoiseToAim(Vector2D& AimingPos)const
 {
-  Vector2D toPos = AimingPos - m_pOwner->Pos();
+    auto* target = m_pOwner->GetTargetBot();
 
-  Vec2DRotateAroundOrigin(toPos, RandInRange(-m_dAimAccuracy, m_dAimAccuracy));
+    // just to be sure
+    if (!target) {
+        return;
+    }
 
-  AimingPos = toPos + m_pOwner->Pos();
+
+    // higher the speed, higer the noise
+    double VelocityImpact = (m_pOwner->Speed() / m_pOwner->MaxSpeed()) * 0.4;
+    double EnemyVelocityImpact = (target->Speed() / target->MaxSpeed()) * 0.2;
+
+    
+    auto OwnerPos = m_pOwner->Pos();
+    auto EnemyPos = target->Pos();
+
+    // no sqrt to preserve ressources
+    double DistanceImpact = (pow(EnemyPos.x - OwnerPos.x, 2) - pow(EnemyPos.y - OwnerPos.y, 2)) / pow(450,2); // 450px or more is no accuracy
+    if (DistanceImpact > 1) {
+        // bring back the noise to 1 if further than 450px
+        DistanceImpact = 1; 
+    }
+    DistanceImpact *= 0.4; 
+
+
+    double Noise = (VelocityImpact + EnemyVelocityImpact + DistanceImpact) * 0.5; // adjust the number for more or less noise
+    
+    // add noise
+    Vector2D toPos = AimingPos - m_pOwner->Pos();
+    Vec2DRotateAroundOrigin(toPos, RandInRange(-Noise, Noise));
+
+    AimingPos = toPos + m_pOwner->Pos(); // applaying the new AimingPos
 }
 
 //-------------------------- PredictFuturePositionOfTarget --------------------
