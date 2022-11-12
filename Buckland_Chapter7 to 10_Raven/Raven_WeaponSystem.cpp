@@ -68,12 +68,26 @@ void Raven_WeaponSystem::SelectWeapon()
   //weapon.
   if (m_pOwner->GetTargetSys()->isTargetPresent())
   {
+    //-----------------
+    //  DISTANCE
+    //-----------------
+    
     //calculate the distance to the target
     double DistToTarget = Vec2DDistance(m_pOwner->Pos(), m_pOwner->GetTargetSys()->GetTarget()->Pos());
 
+    //-----------------
+    //  DESIRABILITY
+    //-----------------
+    
     //for each weapon in the inventory calculate its desirability given the 
     //current situation. The most desirable weapon is selected
     double BestSoFar = MinDouble;
+
+    //-----------------
+    //  HEALTH
+    //-----------------
+
+    int remainingHealth = m_pOwner->GetTargetSys()->GetTarget()->Health();
 
     WeaponMap::const_iterator curWeap;
     for (curWeap=m_WeaponMap.begin(); curWeap != m_WeaponMap.end(); ++curWeap)
@@ -82,7 +96,12 @@ void Raven_WeaponSystem::SelectWeapon()
       //distance to target and ammo remaining)
       if (curWeap->second)
       {
-        double score = curWeap->second->GetDesirability(DistToTarget);
+
+        //-----------------
+        //  HEALTH
+        //-----------------
+
+        double score = curWeap->second->GetDesirability(DistToTarget, remainingHealth);
 
         //if it is the most desirable so far select it
         if (score > BestSoFar)
@@ -93,6 +112,8 @@ void Raven_WeaponSystem::SelectWeapon()
           m_pCurrentWeapon = curWeap->second;
         }
       }
+
+
     }
   }
 

@@ -63,7 +63,7 @@ inline void RocketLauncher::ShootAt(Vector2D pos)
 //---------------------------- Desirability -----------------------------------
 //
 //-----------------------------------------------------------------------------
-double RocketLauncher::GetDesirability(double DistToTarget)
+double RocketLauncher::GetDesirability(double DistToTarget, int remainingHealth)
 {
   if (m_iNumRoundsLeft == 0)
   {
@@ -74,6 +74,9 @@ double RocketLauncher::GetDesirability(double DistToTarget)
     //fuzzify distance and amount of ammo
     m_FuzzyModule.Fuzzify("DistToTarget", DistToTarget);
     m_FuzzyModule.Fuzzify("AmmoStatus", (double)m_iNumRoundsLeft);
+    m_FuzzyModule.Fuzzify("HealthStatus", (double)remainingHealth);
+    m_FuzzyModule.Fuzzify("ProjectileSpeed", (double)m_dMaxProjectileSpeed);
+    m_FuzzyModule.Fuzzify("RateOfFire", (double)m_dRateOfFire);
 
     m_dLastDesirabilityScore = m_FuzzyModule.DeFuzzify("Desirability", FuzzyModule::max_av);
   }
@@ -103,6 +106,23 @@ void RocketLauncher::InitializeFuzzyModule()
   FzSet& Ammo_Okay = AmmoStatus.AddTriangularSet("Ammo_Okay", 0, 10, 30);
   FzSet& Ammo_Low = AmmoStatus.AddTriangularSet("Ammo_Low", 0, 0, 10);
 
+  //RemainingHealth
+  FuzzyVariable& HealthStatus = m_FuzzyModule.CreateFLV("HealthStatus");
+  FzSet& Health_Hight = HealthStatus.AddRightShoulderSet("RemainingHealth_Hight", 50, 75, 100);
+  FzSet& Health_Mid = HealthStatus.AddTriangularSet("RemainingHealth_Medium", 25, 50, 75);
+  FzSet& Health_Low = HealthStatus.AddTriangularSet("RemainingHealth_Low", 0, 25, 50);
+
+  //WeaponProjectileSpeed
+  FuzzyVariable& ProjectileSpeed = m_FuzzyModule.CreateFLV("ProjectileSpeed");
+  FzSet& ProjectileSpeed_Slow = ProjectileSpeed.AddRightShoulderSet("ProjectileSpeed_Slow", 0, 200, 300);
+  FzSet& ProjectileSpeed_Mid = ProjectileSpeed.AddTriangularSet("ProjectileSpeed_Medium", 200, 300, 350);
+  FzSet& ProjectileSpeed_Fast = ProjectileSpeed.AddTriangularSet("ProjectileSpeed_Fast", 300, 350, 400);
+
+  //RateOfFire
+  FuzzyVariable& RateOfFire = m_FuzzyModule.CreateFLV("RateOfFire");
+  FzSet& RateOfFire_Slow = RateOfFire.AddRightShoulderSet("RateOfFire_Slow", 200, 300, 400);
+  FzSet& RateOfFire_Mid = RateOfFire.AddTriangularSet("RateOfFire_Medium", 100, 200, 300);
+  FzSet& RateOfFire_Fast = RateOfFire.AddTriangularSet("RateOfFire_Fast", 0, 100, 200);
 
   m_FuzzyModule.AddRule(FzAND(Target_Close, Ammo_Loads), Undesirable);
   m_FuzzyModule.AddRule(FzAND(Target_Close, Ammo_Okay), Undesirable);
@@ -115,6 +135,29 @@ void RocketLauncher::InitializeFuzzyModule()
   m_FuzzyModule.AddRule(FzAND(Target_Far, Ammo_Loads), Desirable);
   m_FuzzyModule.AddRule(FzAND(Target_Far, Ammo_Okay), Undesirable);
   m_FuzzyModule.AddRule(FzAND(Target_Far, Ammo_Low), Undesirable);
+
+  m_FuzzyModule.AddRule(FzAND(RateOfFire_Slow, Ammo_Okay), Desirable);
+  m_FuzzyModule.AddRule(FzAND(RateOfFire_Slow, Ammo_Low), VeryDesirable);
+
+  m_FuzzyModule.AddRule(FzAND(RateOfFire_Mid, Ammo_Okay), VeryDesirable);
+  m_FuzzyModule.AddRule(FzAND(RateOfFire_Mid, Ammo_Low), Desirable);
+
+  m_FuzzyModule.AddRule(FzAND(RateOfFire_Fast, Ammo_Okay), Desirable);
+  m_FuzzyModule.AddRule(FzAND(RateOfFire_Fast, Ammo_Low), Undesirable);
+
+  m_FuzzyModule.AddRule(FzAND(Target_Medium, ProjectileSpeed_Slow), Desirable);
+  m_FuzzyModule.AddRule(FzAND(Target_Medium, ProjectileSpeed_Mid), VeryDesirable);
+  m_FuzzyModule.AddRule(FzAND(Target_Medium, ProjectileSpeed_Fast), VeryDesirable);
+
+  m_FuzzyModule.AddRule(FzAND(Target_Far, ProjectileSpeed_Slow), Undesirable);
+  m_FuzzyModule.AddRule(FzAND(Target_Far, ProjectileSpeed_Mid), Desirable);
+  m_FuzzyModule.AddRule(FzAND(Target_Far, ProjectileSpeed_Fast), VeryDesirable);
+
+  m_FuzzyModule.AddRule(FzAND(Health_Hight, Ammo_Okay), Desirable);
+  m_FuzzyModule.AddRule(FzAND(Health_Hight, Ammo_Low), Undesirable);
+
+  m_FuzzyModule.AddRule(FzAND(Health_Low, Ammo_Okay), VeryDesirable);
+  m_FuzzyModule.AddRule(FzAND(Health_Low, Ammo_Low), Desirable);
 }
 
 
