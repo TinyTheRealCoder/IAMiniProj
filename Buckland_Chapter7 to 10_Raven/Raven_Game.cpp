@@ -1,4 +1,7 @@
 #include "Raven_Game.h"
+
+#include <thread>
+
 #include "Raven_ObjectEnumerations.h"
 #include "misc/WindowUtils.h"
 #include "misc/Cgdi.h"
@@ -22,10 +25,11 @@
 #include "armory/Projectile_Pellet.h"
 #include "armory/Projectile_Slug.h"
 #include "armory/Projectile_Bolt.h"
+#include "debug/DebugConsole.h"
 
 #include "goals/Goal_Think.h"
 #include "goals/Raven_Goal_Types.h"
-
+#include "NeuralNetwork/LearningBot.h"
 
 
 //uncomment to write object creation/deletion to debug console
@@ -100,6 +104,23 @@ void Raven_Game::Clear()
 
 }
 
+void Raven_Game::TrainThread() {
+
+  m_LancerApprentissage = true;
+
+  debug_con << "lancement de l'apprentissage" << "";
+
+  m_ModeleApprentissage = CNeuralNet(m_TrainingSet.GetInputNb(), m_TrainingSet.GetTargetsNb(), NUM_HIDDEN_NEURONS, LEARNING_RATE);
+  bool isTraining = m_ModeleApprentissage.Train(&m_TrainingSet);
+
+  if (isTraining) {
+    debug_con << "Modele d'apprentissage de tir est appris" << "";
+    m_estEntraine = true;
+	
+  }
+
+}
+
 //-------------------------------- Update -------------------------------------
 //
 //  calls the update function of each entity
@@ -171,6 +192,14 @@ void Raven_Game::Update()
     else if ( (*curBot)->isAlive())
     {
       (*curBot)->Update();
+
+      //on cr�e un �chantillon de 200 observations. Juste assez pour ne pas s'accaparer de la m�moire...
+      if ((m_TrainingSet.GetInputSet().size() < 200) & ((*curBot)->Score() > 1))  {
+
+        //ajouter une observation au jeu d'entrainement
+        AddData((*curBot)->GetDataShoot(), (*curBot)->GetTargetShoot());
+        debug_con << "la taille du training set" << m_TrainingSet.GetInputSet().size() << "";
+      }
     }  
   } 
 
@@ -192,6 +221,20 @@ void Raven_Game::Update()
     }
 
     m_bRemoveABot = false;
+  }
+
+  //Lancer l'apprentissage quand le jeu de donn�es est suffisant
+  //la fonction d'apprentissage s'effectue en parall�le : thread
+
+  if ((m_TrainingSet.GetInputSet().size() >= 200) & (!m_LancerApprentissage)) {
+
+
+    debug_con << "On passe par la" << "";
+
+    std::thread t1(&Raven_Game::TrainThread, this);
+    t1.detach();
+
+
   }
 }
 
@@ -244,13 +287,20 @@ bool Raven_Game::AttemptToAddBot(Raven_Bot* pBot)
 //
 //  Adds a bot and switches on the default steering behavior
 //-----------------------------------------------------------------------------
-void Raven_Game::AddBots(unsigned int NumBotsToAdd)
+void Raven_Game::AddBots(unsigned int NumBotsToAdd, bool isLearningBot)
 { 
   while (NumBotsToAdd--)
   {
     //create a bot. (its position is irrelevant at this point because it will
     //not be rendered until it is spawned)
-    Raven_Bot* rb = new Raven_Bot(this, Vector2D());
+    Raven_Bot* rb;
+    if (!isLearningBot)
+      rb = new Raven_Bot(this, Vector2D());
+    else
+    {
+      rb = new LearningBot(this, Vector2D());
+      debug_con << "Instanciation d'un bot apprenant" << rb->ID() << "";
+    }
 
     //switch the default steering behaviors on
     rb->GetSteering()->WallAvoidanceOn();
@@ -287,6 +337,26 @@ void Raven_Game::NotifyAllBotsOfRemoval(Raven_Bot* pRemovedBot)const
 
     }
 }
+
+//ajout � chaque update d'un bot des donn�es sur son cmportement
+bool Raven_Game::AddData(vector<double>& data, vector<double>& targets)
+{
+  if (data.size() > 0 && targets.size() > 0) {
+
+    if (m_TrainingSet.GetInputNb() <= 0)
+      m_TrainingSet = CData(data.size(), targets.size());
+
+    if (data.size() == m_TrainingSet.GetInputNb() && targets.size() == m_TrainingSet.GetTargetsNb()) {
+
+      m_TrainingSet.AddData(data, targets);
+      return true;
+    }
+  }
+
+  return false;
+
+}
+
 //-------------------------------RemoveBot ------------------------------------
 //
 //  removes the last bot to be added from the game
@@ -367,7 +437,7 @@ Raven_Bot* Raven_Game::GetBotAtPosition(Vector2D CursorPos)const
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 //-------------------------------- LoadMap ------------------------------------
@@ -396,7 +466,7 @@ bool Raven_Game::LoadMap(const std::string& filename)
   //load the new map data
   if (m_pMap->LoadMap(filename))
   { 
-    AddBots(script->GetInt("NumBots"));
+    AddBots(script->GetInt("NumBots"),false);
   
     return true;
   }
@@ -430,7 +500,7 @@ void Raven_Game::ClickRightMouseButton(POINTS p)
   Raven_Bot* pBot = GetBotAtPosition(POINTStoVector(p));
 
   //if there is no selected bot just return;
-  if (!pBot && m_pSelectedBot == NULL) return;
+  if (!pBot && m_pSelectedBot == nullptr) return;
 
   //if the cursor is over a different bot to the existing selection,
   //change selection

@@ -218,6 +218,12 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
           
           break;
 
+     case IDM_GAME_ADDLEARNINGBOT:
+
+       g_pRaven->AddBots(1,true);
+          
+       break;
+
       case IDM_GAME_REMOVEBOT:
           
           g_pRaven->RemoveBot();
