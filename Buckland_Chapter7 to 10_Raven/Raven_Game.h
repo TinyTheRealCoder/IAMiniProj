@@ -99,6 +99,7 @@ public:
   Raven_Game();
   ~Raven_Game();
 
+  inline CData& GetTrainingSet() { return m_TrainingSet; }
   //the usual suspects
   void Render();
   void Update();

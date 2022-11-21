@@ -194,10 +194,11 @@ void Raven_Game::Update()
       (*curBot)->Update();
 
       //on cr�e un �chantillon de 200 observations. Juste assez pour ne pas s'accaparer de la m�moire...
-      if ((m_TrainingSet.GetInputSet().size() < 200) & ((*curBot)->Score() > 1))  {
+      if ((m_TrainingSet.GetInputSet().size() < script->GetInt("Dataset_Size")) && (*curBot)->isPossessed())  {
 
         //ajouter une observation au jeu d'entrainement
-        AddData((*curBot)->GetDataShoot(), (*curBot)->GetTargetShoot());
+          debug_con << (*curBot)->GetDataShoot().size() << " - " << (*curBot)->GetTargetShoot().size() << "";
+        debug_con << AddData((*curBot)->GetDataShoot(), (*curBot)->GetTargetShoot());
         debug_con << "la taille du training set" << m_TrainingSet.GetInputSet().size() << "";
       }
     }  
@@ -226,7 +227,7 @@ void Raven_Game::Update()
   //Lancer l'apprentissage quand le jeu de donn�es est suffisant
   //la fonction d'apprentissage s'effectue en parall�le : thread
 
-  if ((m_TrainingSet.GetInputSet().size() >= 200) & (!m_LancerApprentissage)) {
+  if ((m_TrainingSet.GetInputSet().size() >= script->GetInt("Dataset_Size")) & (!m_LancerApprentissage)) {
 
 
     debug_con << "On passe par la" << "";
