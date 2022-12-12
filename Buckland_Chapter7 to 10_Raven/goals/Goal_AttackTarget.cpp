@@ -4,6 +4,7 @@
 #include "Goal_Wander.h"
 #include "Goal_DodgeSideToSide.h"
 #include "../Raven_Bot.h"
+#include "Debug/DebugConsole.h"
 
 
 
@@ -14,7 +15,6 @@
 void Goal_AttackTarget::Activate()
 {
   m_iStatus = active;
-  m_Hunt = RandInt(0, 1);
 
   //if this goal is reactivated then there may be some existing subgoals that
   //must be removed
@@ -47,13 +47,15 @@ void Goal_AttackTarget::Activate()
     }
   }
 
-  //if the target is not visible, go hunt it. Or abandon it and wander
-  else if (m_Hunt == 1)
+  //if the target is not visible, go hunt it. Or abandon it and wander if the distance between them is too big
+  else if (m_pOwner->GetTargetBot()->Pos().x - m_pOwner->Pos().x < 60 && m_pOwner->GetTargetBot()->Pos().y - m_pOwner->Pos().y > -60)
   {
+    
     AddSubgoal(new Goal_HuntTarget(m_pOwner));
   }
   else 
   {
+
     AddSubgoal(new Goal_Wander(m_pOwner));
   }
 }
