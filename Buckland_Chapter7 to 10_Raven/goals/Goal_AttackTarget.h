@@ -20,6 +20,7 @@
 
 class Goal_AttackTarget : public Goal_Composite<Raven_Bot>
 {
+private:
 public:
 
   Goal_AttackTarget(Raven_Bot* pOwner):Goal_Composite<Raven_Bot>(pOwner, goal_attack_target)
