@@ -218,6 +218,17 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
           
           break;
 
+     case IDM_GAME_ADDLEARNINGBOT:
+         //if (g_pRaven->GetTrainingSet().GetInputSet().size() >= script->GetInt("Dataset_Size")) {
+             g_pRaven->AddBots(1, true);
+         //}
+        // else {
+          //   debug_con << "Vous ne pouvez pas instancier de bots avant que le training set soit complet (" << g_pRaven->GetTrainingSet().GetInputSet().size() << "/" << script->GetInt("Dataset_Size") << ")";
+         //}
+       
+          
+       break;
+
       case IDM_GAME_REMOVEBOT:
           
           g_pRaven->RemoveBot();

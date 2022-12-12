@@ -32,6 +32,7 @@ BEGIN
     BEGIN
         MENUITEM "Load Map",                    IDM_GAME_LOAD
         MENUITEM "Add Bot [ csr up ]",          IDM_GAME_ADDBOT
+        MENUITEM "Add Learning Bot",            IDM_GAME_ADDLEARNINGBOT
         MENUITEM "Remove Bot [ csr down ]",     IDM_GAME_REMOVEBOT
         MENUITEM "Toggle Pause [ 'P' ]",        IDM_GAME_PAUSE
     END
@@ -116,7 +117,7 @@ BEGIN
             VALUE "FileDescription", "Raven\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "Raven\0"
-            VALUE "LegalCopyright", "Copyright © 2003\0"
+            VALUE "LegalCopyright", "Copyright ï¿½ 2003\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Raven.exe\0"
             VALUE "PrivateBuild", "\0"

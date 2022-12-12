@@ -34,11 +34,9 @@ class Raven_SensoryMemory;
 
 class Raven_Bot : public MovingEntity
 {
-private:
+protected:
 
   enum Status{alive, dead, spawning};
-
-private:
 
   //alive, dead or spawning?
   Status                             m_Status;
@@ -109,6 +107,11 @@ private:
   std::vector<Vector2D>              m_vecBotVB;
   //the buffer for the transformed vertices
   std::vector<Vector2D>              m_vecBotVBTrans;
+
+  //apprentissage. 
+  //donnee � enregistrer d�crivant une situation de comportement de l'agent 
+  std::vector<double> m_vecObservation; //distance-target, visibilite, quantite-arme, type arme, son niveau de vie
+  std::vector<double> m_vecTarget; //classe representer sous d'un vecteur de sortie. 
 
 
   //bots shouldn't be copied, only created or respawned
@@ -210,7 +213,10 @@ public:
   Raven_WeaponSystem* const          GetWeaponSys()const{return m_pWeaponSys;}
   Raven_SensoryMemory* const         GetSensoryMem()const{return m_pSensoryMem;}
 
+  std::vector<double> GetDataShoot() { return m_vecObservation; }
+  std::vector<double> GetTargetShoot() { return m_vecTarget; }
 
+  
 };
 
 
