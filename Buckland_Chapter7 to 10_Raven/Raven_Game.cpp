@@ -510,6 +510,13 @@ void Raven_Game::ClickRightMouseButton(POINTS p)
     if (m_pSelectedBot) m_pSelectedBot->Exorcise();
     m_pSelectedBot = pBot;
 
+    list<Raven_Bot*> list = GetAllBots();
+    for (Raven_Bot* rb : list) {
+        if (rb->isWithPlayer() == true) {
+            rb->Swapteam(); //On reset les teams � chaque fois
+        }
+    }
+
     return;
   }
 
@@ -521,6 +528,30 @@ void Raven_Game::ClickRightMouseButton(POINTS p)
 
     //clear any current goals
     m_pSelectedBot->GetBrain()->RemoveAllSubgoals();
+
+    //Player is in his own team
+    m_pSelectedBot->Swapteam();
+
+    list<Raven_Bot*> list = GetAllBots();
+
+    bool equipeFaite = false;
+    int nbBotsParEquipe = list.size() / 2 - 1; //Il y a d�j� le joueur lui m�me dans sa propre �quipe
+    int i = 0;
+    for (Raven_Bot* rb : list) {
+        if (equipeFaite != true) {
+            if (!rb->isWithPlayer() && rb != m_pSelectedBot) {
+                i++;
+                rb->GetBrain()->RemoveAllSubgoals();
+                rb->Swapteam();
+
+                debug_con << "BOT " << rb->ID() << " : is with you ! (The player)" << "";
+
+                if (i >= nbBotsParEquipe) {
+                    equipeFaite = true;
+                }
+            }
+        }
+    }
   }
 
   //if the bot is possessed then a right click moves the bot to the cursor
@@ -541,6 +572,55 @@ void Raven_Game::ClickRightMouseButton(POINTS p)
       m_pSelectedBot->GetBrain()->AddGoal_MoveToPosition(POINTStoVector(p));
     }
   }
+  if (isInModeGestion()) {
+      list<Raven_Bot*> teamate;
+
+      list<Raven_Bot*> list = GetAllBots();
+      for (Raven_Bot* rb : list) {
+          if (rb->isWithPlayer() == true) {
+              if (!(rb == m_pSelectedBot)) { //si ce n'est pas le joueur 
+                  teamate.push_back(rb);
+              }
+          }
+      }
+
+      for (Raven_Bot* rb : teamate) {
+          rb->GetBrain()->RemoveAllSubgoals();
+          rb->GetBrain()->AddGoal_MoveToPosition(POINTStoVector(p));
+      }
+  }
+}
+
+//--------------------- SwitchMode --------------------------
+//Swap between "gestion de l'�quipe" et contr�le du joueur
+void Raven_Game::SwitchMode()
+{
+    list<Raven_Bot*> list = GetAllBots();
+
+    if (modeGestion && m_pSelectedBot != NULL) {
+        modeGestion = false;
+
+        for (Raven_Bot* rb : list) {
+            if (rb->isWithPlayer() == true) {
+                if (!(rb == m_pSelectedBot)) {
+                    rb->Exorcise();
+                }
+            }
+        }
+    }
+    else {
+        modeGestion = true;
+
+        for (Raven_Bot* rb : list) {
+            if (rb->isWithPlayer() == true) {
+                if (!rb->isPossessed()) {
+                    rb->GetBrain()->RemoveAllSubgoals();
+                    rb->TakePossession(); //C'est le seul moyen qu'il passe en priorit� l'ordre que je lui donne
+                    rb->GetBrain()->AddGoal_MoveToPosition(m_pSelectedBot->Pos());
+                }
+            }
+        }
+    }
 }
 
 //---------------------- ClickLeftMouseButton ---------------------------------
@@ -550,6 +630,17 @@ void Raven_Game::ClickLeftMouseButton(POINTS p)
   if (m_pSelectedBot && m_pSelectedBot->isPossessed())
   {
     m_pSelectedBot->FireWeapon(POINTStoVector(p));
+  }
+
+  if (isInModeGestion()) {
+      list<Raven_Bot*> list = GetAllBots();
+      for (Raven_Bot* rb : list) {
+          if (rb->isWithPlayer() == true) {
+              if (!(rb == m_pSelectedBot)) {
+                  rb->FireWeapon(POINTStoVector(p));
+              }
+          }
+      }
   }
 }
 
@@ -564,6 +655,17 @@ void Raven_Game::GetPlayerInput()const
   {
       m_pSelectedBot->RotateFacingTowardPosition(GetClientCursorPosition());
    }
+
+  if (modeGestion) {
+      list<Raven_Bot*> list = GetAllBots();
+      for (Raven_Bot* rb : list) {
+          if (rb->isWithPlayer() == true) {
+              if (!(rb == m_pSelectedBot)) {
+                  rb->RotateFacingTowardPosition(GetClientCursorPosition());
+              }
+          }
+      }
+  }
 }
 
 

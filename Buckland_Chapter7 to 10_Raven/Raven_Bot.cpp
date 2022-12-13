@@ -239,6 +239,7 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
   //first see if the current goal accepts the message
   if (GetBrain()->HandleMessage(msg)) return true;
  
+
   //handle any messages not handles by the goals
   switch(msg.Msg)
   {
@@ -277,6 +278,9 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
     GetSensoryMem()->UpdateWithSoundSource((Raven_Bot*)msg.ExtraInfo);
 
     return true;
+
+  case Msg_LootMate:
+      this->GetBrain()->AddGoal_MoveToPosition(*(Vector2D*) msg.ExtraInfo);
 
   case Msg_UserHasRemovedBot:
     {
@@ -354,6 +358,19 @@ void Raven_Bot::ReduceHealth(unsigned int val)
 
   if (m_iHealth <= 0)
   {
+      list<Raven_Bot*> list = GetWorld()->GetAllBots();
+      for (Raven_Bot* rb : list) {
+          if (isWithPlayer() && rb->isWithPlayer() || !isWithPlayer() && rb->isWithPlayer()) {
+              Dispatcher->DispatchMsg(SEND_MSG_IMMEDIATELY,
+                  ID(),
+                  rb->ID(),
+                  Msg_LootMate,
+                  &Pos());
+
+              debug_con << "Loot position transfer to teamate";
+
+          }
+      }
     SetDead();
   }
 
@@ -374,6 +391,17 @@ void Raven_Bot::TakePossession()
 
     debug_con << "Player Possesses bot " << this->ID() << "";
   }
+
+  list<Raven_Bot*> list = this->GetWorld()->GetAllBots();
+  int i = 0;
+  for (Raven_Bot* rb : list) {
+      if (rb->isPossessed()) {
+          i++;
+      }
+  }
+  if (i == 1) {
+      debug_con << "Player Possesses bot " << this->ID() << "";
+  }
 }
 //------------------------------- Exorcise ------------------------------------
 //
@@ -385,8 +413,16 @@ void Raven_Bot::Exorcise()
 
   //when the player is exorcised then the bot should resume normal service
   m_pBrain->AddGoal_Explore();
-  
-  debug_con << "Player is exorcised from bot " << this->ID() << "";
+  list<Raven_Bot*> list = this->GetWorld()->GetAllBots();
+  int i = 0;
+  for (Raven_Bot* rb : list) {
+      if (rb->isPossessed()) {
+          i++;
+      }
+  }
+  if (i == 0) {
+      debug_con << "Player is exorcised from bot " << this->ID() << "";
+  }
 }
 
 

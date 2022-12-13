@@ -161,6 +161,9 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
            g_pRaven->ExorciseAnyPossessedBot();
 
            break;
+         case 'J':
+             g_pRaven->SwitchMode();
+             break;
 
 
          case VK_UP:

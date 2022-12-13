@@ -41,6 +41,8 @@ public:
   //to null
   void       Update();
 
+  void SetTarget(Raven_Bot* rb) { m_pCurrentTarget = rb; }
+
   //returns true if there is a currently assigned target
   bool       isTargetPresent()const{return m_pCurrentTarget != 0;}
 

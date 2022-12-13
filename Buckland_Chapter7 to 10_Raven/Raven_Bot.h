@@ -103,6 +103,8 @@ protected:
   //set to true when a human player takes over control of the bot
   bool                               m_bPossessed;
 
+  bool withPlayer;
+
   //a vertex buffer containing the bot's geometry
   std::vector<Vector2D>              m_vecBotVB;
   //the buffer for the transformed vertices
@@ -141,6 +143,7 @@ public:
   //this rotates the bot's heading until it is facing directly at the target
   //position. Returns false if not facing at the target.
   bool          RotateFacingTowardPosition(Vector2D target);
+  bool isWithPlayer() { return withPlayer; }
  
   //methods for accessing attribute data
   int           Health()const{return m_iHealth;}
@@ -181,6 +184,15 @@ public:
   //spawns the bot at the given position
   void          Spawn(Vector2D pos);
   
+  void                                 SetTargetBot(Raven_Bot* rb) { m_pTargSys->SetTarget(rb); }
+  void                                 Swapteam() {
+      if (withPlayer) {
+          withPlayer = false;
+      }
+      else {
+          withPlayer = true;
+      }
+  }
   //returns true if this bot is ready to test against all triggers
   bool          isReadyForTriggerUpdate()const;
 

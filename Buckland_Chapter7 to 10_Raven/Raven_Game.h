@@ -131,9 +131,15 @@ public:
   //returns true if the ray between A and B is unobstructed.
   bool        isLOSOkay(Vector2D A, Vector2D B)const;
 
+  bool modeGestion = false;
   //starting from the given origin and moving in the direction Heading this
   //method returns the distance to the closest wall
   double       GetDistanceToClosestWall(Vector2D Origin, Vector2D Heading)const;
+
+  //PlayerControl
+  bool isInModeGestion() { return modeGestion; }
+
+  void SwitchMode();
 
   
   //returns the position of the closest visible switch that triggers the
